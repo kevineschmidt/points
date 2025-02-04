@@ -14,9 +14,9 @@ colors[YELLOW] = 'yellow'
 const BORDER_FORCE_FRACTION = .05
 
 const NUM_POINTS = 1000
-const WIDTH= 750
-const HEIGHT= WIDTH
-const FORCE_RANGE = 20
+let WIDTH= 750
+let HEIGHT= WIDTH
+const FORCE_RANGE = 40
 const MIN_FORCE_RANGE = 5
 const points = []
 const forceMatrix = []
@@ -42,14 +42,7 @@ function draw(context) {
     })
 }
 
-
-function generateForceMatrix() {
-    for (let i = 0; i < LAST_COLOR; i++) {
-        forceMatrix[i] = []
-        for (let j = 0; j < LAST_COLOR; j++) {
-            forceMatrix[i][j] = Math.random() * 2 - 1;
-        }
-    }
+function createForceMatrixTable() {
     const table = document.createElement('table')
 
     document.body.appendChild(table);
@@ -61,19 +54,39 @@ function generateForceMatrix() {
         h.innerHTML = color
         header.appendChild(h)
     })
+
     table.appendChild(header);
     colors.forEach((color, idx1) => {
         tr = document.createElement('tr')
         let td = document.createElement('td')
         td.innerHTML = color
+        td.style.fontWeight = 'bold'
         tr.appendChild(td)
         table.appendChild(tr)
-        colors.forEach((color2, idx2) => {
+        colors.forEach((_color2, idx2) => {
             td = document.createElement('td')
-            td.innerHTML = forceMatrix[idx1][idx2].toFixed(3)
+            const force = forceMatrix[idx1][idx2]
+            td.innerHTML = force.toFixed(3)
+            if (force >= 0) {
+                const redAndBlue = 255 * (1-force)
+                td.style.backgroundColor = `rgb(${redAndBlue}, 255, ${redAndBlue})`
+            } else {
+                const greenAndBlue = 255 * (1 + force)
+                td.style.backgroundColor = `rgb(255, ${greenAndBlue}, ${greenAndBlue})`
+            }
             tr.appendChild(td)
         })
     })
+}
+
+function generateForceMatrix() {
+    for (let i = 0; i < LAST_COLOR; i++) {
+        forceMatrix[i] = []
+        for (let j = 0; j < LAST_COLOR; j++) {
+            forceMatrix[i][j] = Math.random() * 2 - 1;
+        }
+    }
+
     /*
     forceMatrix[BLUE][BLUE] = 2
      forceMatrix[BLUE][RED] = 1
@@ -158,15 +171,25 @@ function movePoints(deltaT) {
 }
 
 window.onload = () => {
+    WIDTH = document.body.clientWidth
+    HEIGHT = document.body.clientHeight
+    addEventListener("resize", (event) => {
+        WIDTH = document.body.clientWidth
+        HEIGHT = document.body.clientHeight
+        canvas.width = WIDTH
+        canvas.height = HEIGHT
+    });
     const canvas = document.querySelector('#dacanvas');
     const fps = document.querySelector('#fps')
     canvas.width = WIDTH;
     canvas.height = HEIGHT;
     createPoints()
     generateForceMatrix()
-    const context = canvas.getContext('2d');
+    createForceMatrixTable()
+ 
     let lastTime = performance.now();
     const render = () =>{
+        const context = canvas.getContext('2d');
         const now = performance.now();
         const actualDelta = now - lastTime
         fps.innerText = (1 / (.001 * actualDelta)).toFixed( 1);
